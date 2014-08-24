@@ -1,0 +1,17 @@
+{
+    "contents" : "---\ntitle: \"Untitled\"\noutput: html_document\n---\n\nThis is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.\n\nWhen you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:\n\n```{r}\nlibrary(\"caret\")\nlibrary(\"rpart\")\nlibrary(\"tree\")\nlibrary(\"randomForest\")\nlibrary(\"e1071\")\nlibrary(\"ggplot2\")\nlibrary(plyr)\nseaflow <- read.csv('seaflow_21min.csv')\nsummary(seaflow)\ninTrain <- createDataPartition(seaflow$cell_id,p=.5,list=FALSE)\ntrain1 <- seaflow[inTrain,]\ntest1 <- seaflow[-inTrain,]\n\n```\n\nYou can also embed plots, for example:\n\n```{r, echo=FALSE}\nggplot()+geom_point(data=seaflow,aes(x=chl_small, y=pe, colour=pop))\nfol <- formula(pop ~ fsc_small + fsc_perp + fsc_big + pe + chl_big + chl_small)\n\nmodel1 <- rpart(fol, method=\"class\", data=train1)\nprint(model1)\npred1 <- predict(model1,test1,type=\"class\")\n\nmodel2 <- randomForest(fol, data=train1)\nprint(model2)\npred2 <- predict(model2,test1)\n\nmodel3 <- svm(fol, data=train1)\nprint(model3)\npred3 <- predict(model3,test1)\n\nA <- table(pred1,test1$pop)\nerror1 <- (sum(A)-sum(diag(A)))/sum(A)\npredRight1 <- pred1==test1$pop\n\nA <- table(pred2,test1$pop)\nerror2 <- (sum(A)-sum(diag(A)))/sum(A)\npredRight2 <- pred2==test1$pop\n\nA <- table(pred3,test1$pop)\nerror3 <- (sum(A)-sum(diag(A)))/sum(A)\npredRight3 <- pred3==test1$pop\n\n\n```\n\nNote that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.\n",
+    "created" : 1408654820984.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "274193630",
+    "id" : "866699F9",
+    "lastKnownWriteTime" : 1408697844,
+    "path" : "~/R/OceanMicrobes/oceanMicrobes.Rmd",
+    "project_path" : "oceanMicrobes.Rmd",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "source_on_save" : false,
+    "type" : "r_markdown"
+}

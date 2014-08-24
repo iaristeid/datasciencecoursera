@@ -1,4 +1,4 @@
-datasciencecoursera
-===================
+coursera-data-sci
+=================
 
-This is part of peer assessment work for "The Data Science Toolbox"
+Programming assignments of Introduction to Data Science course (https://www.coursera.org/course/datasci)

@@ -1,0 +1,132 @@
+Coursera "Data Science" - Titanic Kaggle Competition
+========================================================
+The task is to predict whether a given passenger survived the sinking of the Titanic based on various attributes including sex, age, location of the passenger's cabin on the ship, family members, the fare they paid, and other information.
+
+The solution is implemented in R, as follows:
+1. Training and Test Data are loaded into R
+2. Features to be used to in prediction algorithm are selected
+3. Data Cleansing and Preparation is performed.
+4. The training data set is further split in training and validation set.
+5. The predictive algorithm is trained using the training data set.
+6. Prediction error is measured on the validation set.
+7. The Prediction Algorithm is finally applied on test set and compared towards the expected outcome.
+
+I followed the instructions of mentioned in:
+http://trevorstephens.com/post/72916401642/titanic-getting-started-with-r
+
+## Data 
+
+The training data for this project are available here: 
+https://www.kaggle.com/c/titanic-gettingStarted/download/train.csv
+
+The test data are available here: 
+https://www.kaggle.com/c/titanic-gettingStarted/download/test.csv
+
+
+## Data Ingestion
+
+First we load the training and test data sets into R (training and testing data frames).
+
+```{r}
+Sys.getlocale(category = "LC_ALL")
+Sys.setlocale("LC_TIME", 'English_US')
+
+training <- read.csv("./data/train.csv")
+training$Survived <- as.factor(training$Survived)
+```
+
+```{r}
+testing <- read.csv("./data/test.csv")
+```
+
+# Feature Selection
+In order to select the numeric features to be used as predictors, we calculate the correlation between features and we locate those which have maximum impact on others (absolute value of correlation > 0.5)
+The list of most important numeric features is the following:
+- Fare
+- Pclass
+
+```{r}
+M <- abs(cor(training[sapply(training[], is.numeric)]))
+diag(M) <- 0
+which(M > 0.5,arr.ind=T)
+```
+
+Using only the numeric features did not work well (the prediction accuracy was unacceptably low), therefore I revisited the features and selected also some of the non-numeric which seem very important.
+
+We therefore construct and plot a decision tree to check the impact of each feature.
+
+```{r}
+library(rpart)
+library(rattle)
+library(rpart.plot)
+library(RColorBrewer) 
+fit <- rpart(Survived ~ Fare + Pclass + Sex + Age + SibSp + Parch + Embarked, data=training, method="class")
+fit
+fancyRpartPlot(fit) 
+```
+
+## Data Cleansing and Preparation
+
+However, random forest excludes records with missing feature values (e.g. Age).
+
+Therefore, we print the summary of training data set values in order to locate features with missing values and we estimate them as follows:
+
+```{r}
+summary(training)
+
+which(training$Embarked == '')
+training$Embarked[c(62,830)] <- 'S'
+training$Embarked <- as.factor(training$Embarked)
+
+Agefit <- rpart(Age ~ Pclass + Sex + SibSp + Parch + Fare + Embarked, data=training[!is.na(training$Age),], method="anova")
+training$Age[is.na(training$Age)] <- predict(Agefit, training[is.na(training$Age),])
+summary(training$Age)
+```
+
+## Preparation for Cross-Validation
+
+In order to measure our model we partition our training set into two parts (75%, 25%): train1, test1 data frames.
+
+```{r}
+library(caret)
+library(randomForest)
+inTrain <- createDataPartition(training$Survived,p=0.75,list=FALSE)
+train1 <- training[inTrain,]
+test1 <- training[-inTrain,]
+```
+
+
+## Prediction Models
+
+We will be using Random Forest based on the first part of our training set (train1). 
+We are now ready to train our model using the Random Forest algorithm:
+```{r}
+#rf1 <- randomForest(Survived ~ Pclass + Sex + Age + SibSp + Parch + Fare + Embarked, data=train1, importance=TRUE, ntree=2000)
+rf1 <- train(Survived ~ Pclass + Sex + Age + SibSp + Parch + Fare + Embarked,train1,method="rf") 
+```
+
+## Error Estimation
+
+We will estimate errors by comparing predictions towards the real classe values of the second part of training set (test1).
+Error probability and number of correct predictions are displayed below:
+
+```{r}
+pred1 <- predict(rf1,test1[,-2])
+A <- table(pred1,test1$Survived)
+A
+error1 <- (sum(A)-sum(diag(A)))/sum(A)
+predRight1 <- pred1==test1$Survived
+
+error1
+sum(predRight1)
+```
+
+
+## Final Prediction Outcome
+
+The prediction outcome of the final model on the original test set is:
+
+```{r}
+predict(rf1,testing)
+
+```
